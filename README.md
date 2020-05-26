@@ -1,7 +1,7 @@
 # propag
 
 ## What it does
-- propagating bodies
+- propagate bodies
 - return last state vector
 
 ## What it does not do YET

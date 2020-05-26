@@ -8,7 +8,7 @@
 - return full trajectory
 - backward and forward propagation one-click tool to meet flyby conditions
 - importing ephemeris
-- change of frame of reference / & origin
+- change of frame of reference & origin
 - using spice
 
 ## Terminology

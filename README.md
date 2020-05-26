@@ -6,6 +6,7 @@
 
 ## What it does not do YET
 - return full trajectory
+- backward and forward one-click tool to meet flyby conditions
 - importing ephemeris
 - change of frame of reference / & origin
 - using spice

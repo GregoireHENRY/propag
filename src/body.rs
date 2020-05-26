@@ -9,13 +9,13 @@ pub struct Body
     pub mass:   f64,
     pub radius: f64,
     pub state:  State,
-    pub method: String,
+    pub method: &'static str,
 }
 
-pub fn new(name: &'static str, mass: f64, radius: f64, state: State, method: &str)
+pub fn new(name: &'static str, mass: f64, radius: f64, state: State, method: &'static str)
 -> Body
 {
-    Body{name: name, mass: mass, radius: radius, state: state, method: method.to_string()}
+    Body{name: name, mass: mass, radius: radius, state: state, method: method}
 }
 
 impl Body

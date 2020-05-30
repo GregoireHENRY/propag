@@ -1,37 +1,41 @@
 use crate::propag;
-use propag::{Propag};
+use propag::{math, Propag};
 
-fn rkfn(propag: Propag, _it: usize)
--> Propag
+use ndarray::prelude::*;
+
+fn rkfn(propag: &Propag, p: Array2<f64>)
+-> Array2<f64>
 {
-    let mut new_propag = propag.clone();
+    let mut new_p = p.clone();
     for ii in propag.propagate_index..propag.nbody {
-        new_propag.vx[ii] = 0.;
-        new_propag.vy[ii] = 0.;
-        new_propag.vz[ii] = 0.;
+        new_p[[ii, 3]] = 0.;
+        new_p[[ii, 4]] = 0.;
+        new_p[[ii, 5]] = 0.;
         for jj in 0..propag.nbody {
-            if propag.names[ii] == propag.names[jj] { continue; }
-            let distance2 = propag.distance(ii, jj).powi(2);
-            new_propag.vx[ii] -= propag::G * propag.masses[jj] * propag.xdirection(ii, jj) / distance2;
-            new_propag.vy[ii] -= propag::G * propag.masses[jj] * propag.ydirection(ii, jj) / distance2;
-            new_propag.vz[ii] -= propag::G * propag.masses[jj] * propag.zdirection(ii, jj) / distance2;
+            if ii == jj { continue; }
+            let distance2 = math::distance(p[[ii, 0]], p[[ii, 1]], p[[ii, 2]], p[[jj, 0]], p[[jj, 1]], p[[jj, 2]]).powi(2);
+            new_p[[ii, 3]] -= propag::G * propag.masses[jj] * math::xdirection(p[[ii, 0]], p[[ii, 1]], p[[ii, 2]], p[[jj, 0]], p[[jj, 1]], p[[jj, 2]]) / distance2;
+            new_p[[ii, 4]] -= propag::G * propag.masses[jj] * math::ydirection(p[[ii, 0]], p[[ii, 1]], p[[ii, 2]], p[[jj, 0]], p[[jj, 1]], p[[jj, 2]]) / distance2;
+            new_p[[ii, 5]] -= propag::G * propag.masses[jj] * math::zdirection(p[[ii, 0]], p[[ii, 1]], p[[ii, 2]], p[[jj, 0]], p[[jj, 1]], p[[jj, 2]]) / distance2;
         }
-        new_propag.x[ii] = propag.vx[ii];
-        new_propag.y[ii] = propag.vy[ii];
-        new_propag.z[ii] = propag.vz[ii];
+        new_p[[ii, 0]] = p[[ii, 3]];
+        new_p[[ii, 1]] = p[[ii, 4]];
+        new_p[[ii, 2]] = p[[ii, 5]];
     }
-    new_propag
+    new_p
 }
 
-pub fn rk(mut propag: &mut Propag)
+pub fn rk(propag: &mut Propag)
 {
+    let mut p = propag.get_state(0);
     for ii in 0..1 {//time.list.len() {
-        let k1 = propag.time_step() * rkfn(propag.clone(), ii);
-        let k2 = propag.time_step() * rkfn(propag.clone() + k1.clone() / 2., ii);
-        let k3 = propag.time_step() * rkfn(propag.clone() + k2.clone() / 2., ii);
-        let k4 = propag.time_step() * rkfn(propag.clone() + k3.clone(), ii);
-        propag = propag + (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
+        let k1 = propag.time_step() * rkfn(&propag, p.clone());
+        let k2 = propag.time_step() * rkfn(&propag, p.clone() + k1.clone() / 2.);
+        let k3 = propag.time_step() * rkfn(&propag, p.clone() + k2.clone() / 2.);
+        let k4 = propag.time_step() * rkfn(&propag, p.clone() + k3.clone());
+        p = p + (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
+        propag.set_state(ii, &p);
     }
     propag.display_label();
-    propag.display(1);
+    propag.display(1, 0);
 }

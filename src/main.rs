@@ -15,9 +15,9 @@ fn main() {
     propag.add("133P", 1e13, 2e3, 0., 0., 0., 0., 0., 0.);
     propag.propagate_nexts();
 
-    propag.states[0].display(1);
+    propag.states[0].display_body(1);
     propag.add("spacecraft", 10., 0.01, -5e3, 0., 0., 0., 1., 0.);
-    propag.states[0].display(1);
+    propag.states[0].display_body(1);
 
     /*
     let tic = Instant::now();

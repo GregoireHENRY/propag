@@ -27,7 +27,7 @@ impl States {
         self.vy[ibody] = vy;
         self.vz[ibody] = vz;
     }
-    pub fn display(&self, ibody: usize) {
+    pub fn display_body(&self, ibody: usize) {
         println!(
             "{:20.10}{:20.10}{:20.10}{:20.10}{:20.10}{:20.10}",
             self.x[ibody],

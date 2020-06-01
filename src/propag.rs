@@ -83,54 +83,6 @@ impl Propag {
         stdout().flush().unwrap();
         self.states[itime].display_body(ibody);
     }
-    /*
-    pub fn get_state(&self, kk: usize) -> Array2<f64> {
-        stack(
-            Axis(1),
-            &[
-                self.x
-                    .slice(s![.., kk])
-                    .broadcast((1, self.nbody))
-                    .unwrap()
-                    .t(),
-                self.y
-                    .slice(s![.., kk])
-                    .broadcast((1, self.nbody))
-                    .unwrap()
-                    .t(),
-                self.z
-                    .slice(s![.., kk])
-                    .broadcast((1, self.nbody))
-                    .unwrap()
-                    .t(),
-                self.vx
-                    .slice(s![.., kk])
-                    .broadcast((1, self.nbody))
-                    .unwrap()
-                    .t(),
-                self.vy
-                    .slice(s![.., kk])
-                    .broadcast((1, self.nbody))
-                    .unwrap()
-                    .t(),
-                self.vz
-                    .slice(s![.., kk])
-                    .broadcast((1, self.nbody))
-                    .unwrap()
-                    .t(),
-            ],
-        )
-        .unwrap()
-    }
-    pub fn set_state(&mut self, kk: usize, p: &Array2<f64>) {
-        self.x.column_mut(kk).assign(&p.slice(s![.., 0]));
-        self.y.column_mut(kk).assign(&p.slice(s![.., 1]));
-        self.z.column_mut(kk).assign(&p.slice(s![.., 2]));
-        self.vx.column_mut(kk).assign(&p.slice(s![.., 3]));
-        self.vy.column_mut(kk).assign(&p.slice(s![.., 4]));
-        self.vz.column_mut(kk).assign(&p.slice(s![.., 5]));
-    }
-    */
 }
 
 pub fn set_time(init: f64, end: f64, step: f64) -> Array1<f64> {

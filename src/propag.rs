@@ -1,17 +1,16 @@
 extern crate itertools;
 extern crate ndarray;
 
-//mod math;
-//mod physics;
+mod math;
+mod physics;
 mod states;
 
 use ndarray::prelude::*;
-use std::io::{stdout, Write};
-//use ndarray::stack;
 use states::States;
+use std::io::{stdout, Write};
 
 pub const _AU: f64 = 149597870700.;
-pub const _G: f64 = 6.67408e-11;
+pub const G: f64 = 6.67408e-11;
 pub const DAY: f64 = 86400.;
 pub const _SUN_FLUX: f64 = 1371.;
 pub const _VLIGHT: f64 = 3e8;
@@ -67,12 +66,10 @@ impl Propag {
     pub fn propagate_nexts(&mut self) {
         self.nfrozen = self.build_index;
     }
-    /*
     pub fn start(&mut self) {
         physics::rk(self);
     }
-    */
-    pub fn _time_step(&self) -> f64 {
+    pub fn time_step(&self) -> f64 {
         self.time[1] - self.time[0]
     }
     pub fn _display_label(&self) {

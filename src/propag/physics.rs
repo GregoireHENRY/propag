@@ -1,69 +1,57 @@
 use crate::propag;
-use propag::{math, Propag};
+use itertools::izip;
+use propag::{Propag, States};
 
-use ndarray::prelude::*;
-
-/*
-fn rkfn(propag: &Propag, p: Array2<f64>) -> Array2<f64> {
-    let mut new_p = p.clone();
-    for ii in propag.propagate_index..propag.nbody {
-        new_p[[ii, 3]] = 0.;
-        new_p[[ii, 4]] = 0.;
-        new_p[[ii, 5]] = 0.;
-        for jj in 0..propag.nbody {
-            if ii == jj {
+fn rkfn(propag: &Propag, mut s: States) -> States {
+    let mut new_s = s.clone();
+    for (name, x, y, z, vx, vy, vz) in izip!(
+        propag.names.iter(),
+        new_s.x.iter_mut(),
+        new_s.y.iter_mut(),
+        new_s.z.iter_mut(),
+        new_s.vx.iter_mut(),
+        new_s.vy.iter_mut(),
+        new_s.vz.iter_mut()
+    ) {
+        let old_vx = *vx;
+        let old_vy = *vy;
+        let old_vz = *vz;
+        *vx = 0.;
+        *vy = 0.;
+        *vz = 0.;
+        for (o_name, o_mass, o_x, o_y, o_z) in izip!(
+            propag.names.iter(),
+            propag.masses.iter(),
+            s.x.iter_mut(),
+            s.y.iter_mut(),
+            s.z.iter_mut(),
+        ) {
+            if name == o_name {
                 continue;
             }
-            let distance2 = math::norm(
-                p[[ii, 0]] - p[[jj, 0]],
-                p[[ii, 1]] - p[[jj, 1]],
-                p[[ii, 2]] - p[[jj, 2]],
-            )
-            .powi(2);
-            new_p[[ii, 3]] -= propag::G
-                * propag.masses[jj]
-                * math::unitx(
-                    p[[ii, 0]] - p[[jj, 0]],
-                    p[[ii, 1]] - p[[jj, 1]],
-                    p[[ii, 2]] - p[[jj, 2]],
-                )
-                / distance2;
-            new_p[[ii, 4]] -= propag::G
-                * propag.masses[jj]
-                * math::unity(
-                    p[[ii, 0]] - p[[jj, 0]],
-                    p[[ii, 1]] - p[[jj, 1]],
-                    p[[ii, 2]] - p[[jj, 2]],
-                )
-                / distance2;
-            new_p[[ii, 5]] -= propag::G
-                * propag.masses[jj]
-                * math::unitz(
-                    p[[ii, 0]] - p[[jj, 0]],
-                    p[[ii, 1]] - p[[jj, 1]],
-                    p[[ii, 2]] - p[[jj, 2]],
-                )
-                / distance2;
+            let k =
+                -propag::G * o_mass / propag::math::norm(*x - *o_x, *y - *o_y, *z - *o_z).powi(2);
+            *vx = propag::math::unitx(*x - *o_x, *y - *o_y, *z - *o_z) * k;
+            *vy = propag::math::unity(*x - *o_x, *y - *o_y, *z - *o_z) * k;
+            *vz = propag::math::unitz(*x - *o_x, *y - *o_y, *z - *o_z) * k;
         }
-        new_p[[ii, 0]] = p[[ii, 3]];
-        new_p[[ii, 1]] = p[[ii, 4]];
-        new_p[[ii, 2]] = p[[ii, 5]];
+        *x = old_vx;
+        *y = old_vy;
+        *z = old_vz;
     }
-    new_p
+    new_s
 }
-*/
 
 pub fn rk(propag: &mut Propag) {
-    println!("");
-    for states in propag.states.iter() {
-        break;
-        /*
-        let k1 = propag.time_step() * rkfn(&propag, p.clone());
-        let k2 = propag.time_step() * rkfn(&propag, p.clone() + k1.clone() / 2.);
-        let k3 = propag.time_step() * rkfn(&propag, p.clone() + k2.clone() / 2.);
-        let k4 = propag.time_step() * rkfn(&propag, p.clone() + k3.clone());
-        p = p + (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
-        propag.set_state(ii + 1, &p);
-        */
+    let mut states = propag.states.clone();
+    let mut ps = states[0].clone();
+    for s in states.iter_mut().skip(1) {
+        let k1 = propag.time_step() * rkfn(propag, ps.clone());
+        let k2 = propag.time_step() * rkfn(propag, ps.clone() + k1.clone() / 2.);
+        let k3 = propag.time_step() * rkfn(propag, ps.clone() + k2.clone() / 2.);
+        let k4 = propag.time_step() * rkfn(propag, ps.clone() + k3.clone());
+        *s = ps + (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
+        ps = s.clone();
     }
+    propag.states = states;
 }

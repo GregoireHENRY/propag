@@ -61,7 +61,7 @@ impl Propag {
         self.names[self.build_index] = name;
         self.masses[self.build_index] = mass;
         self.radii[self.build_index] = radius;
-        self.states[self.build_index].set(self.build_index, x, y, z, vx, vy, vz);
+        self.states[0].set(self.build_index, x, y, z, vx, vy, vz);
         self.build_index += 1;
     }
     pub fn propagate_nexts(&mut self) {

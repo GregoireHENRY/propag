@@ -84,7 +84,7 @@ impl Propag {
     pub fn _display(&self, ibody: usize, itime: usize) {
         print!("{:11.1}", self.time[itime]);
         stdout().flush().unwrap();
-        self.states[itime].display(ibody);
+        self.states[itime].display_body(ibody);
     }
     /*
     pub fn get_state(&self, kk: usize) -> Array2<f64> {

@@ -1,3 +1,4 @@
+extern crate crossbeam;
 extern crate itertools;
 extern crate ndarray;
 
@@ -7,6 +8,7 @@ mod states;
 
 use ndarray::prelude::*;
 use states::States;
+use std::fs::File;
 
 pub const _AU: f64 = 149597870700.;
 pub const G: f64 = 6.67408e-11;
@@ -15,23 +17,25 @@ pub const _SUN_FLUX: f64 = 1371.;
 pub const _VLIGHT: f64 = 3e8;
 
 pub struct Propag {
-    pub frame: &'static str,
-    pub names: Array1<&'static str>,
+    pub frame: String,
+    pub names: Array1<String>,
     pub masses: Array1<f64>,
     pub radii: Array1<f64>,
     pub states: States,
+    pub saves: Array1<bool>,
     pub time: Array1<f64>,
     pub build_index: usize,
     pub nfrozen: usize,
 }
 
-pub fn new(frame: &'static str, nbody: usize, time: Array1<f64>) -> Propag {
+pub fn new(frame: &str, nbody: usize, time: Array1<f64>) -> Propag {
     Propag {
-        frame,
+        frame: frame.to_string(),
         names: Array1::default(nbody),
         masses: Array1::default(nbody),
         radii: Array1::default(nbody),
         states: states::new(nbody),
+        saves: Array1::default(nbody),
         time,
         build_index: 0,
         nfrozen: 0,
@@ -41,7 +45,7 @@ pub fn new(frame: &'static str, nbody: usize, time: Array1<f64>) -> Propag {
 impl Propag {
     pub fn add(
         &mut self,
-        name: &'static str,
+        name: &str,
         mass: f64,
         radius: f64,
         x: f64,
@@ -51,7 +55,7 @@ impl Propag {
         vy: f64,
         vz: f64,
     ) {
-        self.names[self.build_index] = name;
+        self.names[self.build_index] = name.to_string();
         self.masses[self.build_index] = mass;
         self.radii[self.build_index] = radius;
         self.states.set(self.build_index, x, y, z, vx, vy, vz);
@@ -75,6 +79,11 @@ impl Propag {
     pub fn display(&self, itime: usize, ibody: usize) {
         print!("{:11.1}", self.time[itime]);
         self.states.display_body(ibody);
+    }
+    pub fn save(&mut self, name: &str) {
+        let iname = self.names.iter().position(|x| x == name).unwrap();
+        self.saves[iname] = true;
+        File::create(format!("rsc/out/{}.txt", name)).unwrap();
     }
 }
 

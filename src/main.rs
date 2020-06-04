@@ -15,6 +15,8 @@ fn main() {
     propag.propagate_nexts();
     propag.add("spacecraft", 10., 0.01, -5e3, 0., 0., 0., 1., 0.);
 
+    propag.save("spacecraft");
+
     propag.display_label();
     propag.display(0, 1);
     let tic = Instant::now();

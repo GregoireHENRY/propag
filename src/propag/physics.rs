@@ -2,8 +2,9 @@ use crate::propag;
 use itertools::izip;
 use propag::{Propag, States};
 
-//use crossbeam::thread;
-//use std::thread;
+use std::sync::mpsc;
+use std::sync::mpsc::{Receiver, Sender};
+use std::thread;
 
 fn rkfn(propag: &Propag, mut s: States) -> States {
     let mut new_s = s.clone();
@@ -46,11 +47,15 @@ fn rkfn(propag: &Propag, mut s: States) -> States {
 }
 
 pub fn rk(propag: &mut Propag) {
-    for _ in propag.time.iter() {
-        let k1 = propag.time_step() * rkfn(&propag, propag.states.clone());
-        let k2 = propag.time_step() * rkfn(&propag, propag.states.clone() + k1.clone() / 2.);
-        let k3 = propag.time_step() * rkfn(&propag, propag.states.clone() + k2.clone() / 2.);
-        let k4 = propag.time_step() * rkfn(&propag, propag.states.clone() + k3.clone());
-        propag.states += (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
-    }
+    let (to, from): (Sender<Vec<f32>>, Receiver<Vec<f32>>) = mpsc::channel();
+    let child = thread::spawn(move || {
+        for _ in propag.time.iter() {
+            let k1 = propag.time_step() * rkfn(&propag, propag.states.clone());
+            let k2 = propag.time_step() * rkfn(&propag, propag.states.clone() + k1.clone() / 2.);
+            let k3 = propag.time_step() * rkfn(&propag, propag.states.clone() + k2.clone() / 2.);
+            let k4 = propag.time_step() * rkfn(&propag, propag.states.clone() + k3.clone());
+            propag.states += (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
+        }
+    });
+    child.join().expect("oops! the child thread panicked");
 }

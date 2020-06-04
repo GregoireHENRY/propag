@@ -54,6 +54,7 @@ pub fn rk(propag: &mut Propag) {
         // THREAD RECEIVER
         for _ in propag.time.iter() {
             let data = from.recv().unwrap();
+            //data to be written in file
         }
     });
 

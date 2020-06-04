@@ -13,12 +13,7 @@ fn rkfn(propag: &Propag, mut s: States) -> States {
         new_s.vy.iter_mut(),
         new_s.vz.iter_mut()
     ) {
-        let old_vx = *vx;
-        let old_vy = *vy;
-        let old_vz = *vz;
-        *vx = 0.;
-        *vy = 0.;
-        *vz = 0.;
+        let old = (*vx, *vy, *vz);
         for (o_name, o_mass, o_x, o_y, o_z) in izip!(
             propag.names.iter(),
             propag.masses.iter(),
@@ -29,29 +24,27 @@ fn rkfn(propag: &Propag, mut s: States) -> States {
             if name == o_name {
                 continue;
             }
-            let k =
-                -propag::G * o_mass / propag::math::norm(*x - *o_x, *y - *o_y, *z - *o_z).powi(2);
-            *vx = propag::math::unitx(*x - *o_x, *y - *o_y, *z - *o_z) * k;
-            *vy = propag::math::unity(*x - *o_x, *y - *o_y, *z - *o_z) * k;
-            *vz = propag::math::unitz(*x - *o_x, *y - *o_y, *z - *o_z) * k;
+            let dx = *x - *o_x;
+            let dy = *y - *o_y;
+            let dz = *z - *o_z;
+            let k = -propag::G * o_mass / propag::math::norm(dx, dy, dz).powi(2);
+            *vx = propag::math::unitx(dx, dy, dz) * k;
+            *vy = propag::math::unity(dx, dy, dz) * k;
+            *vz = propag::math::unitz(dx, dy, dz) * k;
         }
-        *x = old_vx;
-        *y = old_vy;
-        *z = old_vz;
+        *x = old.0;
+        *y = old.1;
+        *z = old.2;
     }
     new_s
 }
 
 pub fn rk(propag: &mut Propag) {
-    let mut states = propag.states.clone();
-    let mut ps = states[0].clone();
-    for s in states.iter_mut().skip(1) {
-        let k1 = propag.time_step() * rkfn(propag, ps.clone());
-        let k2 = propag.time_step() * rkfn(propag, ps.clone() + k1.clone() / 2.);
-        let k3 = propag.time_step() * rkfn(propag, ps.clone() + k2.clone() / 2.);
-        let k4 = propag.time_step() * rkfn(propag, ps.clone() + k3.clone());
-        *s = ps + (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
-        ps = s.clone();
+    for _ in propag.time.iter() {
+        let k1 = propag.time_step() * rkfn(propag, propag.states.clone());
+        let k2 = propag.time_step() * rkfn(propag, propag.states.clone() + k1.clone() / 2.);
+        let k3 = propag.time_step() * rkfn(propag, propag.states.clone() + k2.clone() / 2.);
+        let k4 = propag.time_step() * rkfn(propag, propag.states.clone() + k3.clone());
+        propag.states += (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
     }
-    propag.states = states;
 }

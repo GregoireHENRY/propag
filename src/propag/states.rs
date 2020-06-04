@@ -10,15 +10,18 @@ pub struct States {
     pub vz: Array1<f64>,
 }
 
-impl States {
-    pub fn init(&mut self, nbody: usize) {
-        self.x = Array1::default(nbody);
-        self.y = Array1::default(nbody);
-        self.z = Array1::default(nbody);
-        self.vx = Array1::default(nbody);
-        self.vy = Array1::default(nbody);
-        self.vz = Array1::default(nbody);
+pub fn new(nbody: usize) -> States {
+    States {
+        x: Array1::default(nbody),
+        y: Array1::default(nbody),
+        z: Array1::default(nbody),
+        vx: Array1::default(nbody),
+        vy: Array1::default(nbody),
+        vz: Array1::default(nbody),
     }
+}
+
+impl States {
     pub fn set(&mut self, ibody: usize, x: f64, y: f64, z: f64, vx: f64, vy: f64, vz: f64) {
         self.x[ibody] = x;
         self.y[ibody] = y;
@@ -73,5 +76,10 @@ impl std::ops::Add for States {
         self.vy = self.vy + oth.vy;
         self.vz = self.vz + oth.vz;
         self
+    }
+}
+impl std::ops::AddAssign for States {
+    fn add_assign(&mut self, oth: Self) {
+        *self = self.clone() + oth;
     }
 }

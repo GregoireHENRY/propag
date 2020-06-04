@@ -1,6 +1,5 @@
 mod propag;
 
-use std::io::{stdout, Write};
 use std::time::Instant;
 
 fn main() {
@@ -16,12 +15,11 @@ fn main() {
     propag.propagate_nexts();
     propag.add("spacecraft", 10., 0.01, -5e3, 0., 0., 0., 1., 0.);
 
+    propag.display_label();
+    propag.display(0, 1);
     let tic = Instant::now();
-    print!("Retro propagation started..");
-    stdout().flush().unwrap();
+    println!("Retro propagation started..");
     propag.start();
-    println!(" elapsed time {:.2} seconds.", tic.elapsed().as_secs_f64());
-
-    propag.states[0].display_body(1);
-    propag.states[propag.time.len() - 1].display_body(1);
+    println!("\telapsed time {:.2} seconds.", tic.elapsed().as_secs_f64());
+    propag.display(propag.time.len() - 1, 1);
 }

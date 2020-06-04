@@ -7,7 +7,6 @@ mod states;
 
 use ndarray::prelude::*;
 use states::States;
-use std::io::{stdout, Write};
 
 pub const _AU: f64 = 149597870700.;
 pub const G: f64 = 6.67408e-11;
@@ -20,24 +19,19 @@ pub struct Propag {
     pub names: Array1<&'static str>,
     pub masses: Array1<f64>,
     pub radii: Array1<f64>,
-    pub states: Array1<States>,
+    pub states: States,
     pub time: Array1<f64>,
     pub build_index: usize,
     pub nfrozen: usize,
 }
 
 pub fn new(frame: &'static str, nbody: usize, time: Array1<f64>) -> Propag {
-    let ntime = time.len();
-    let mut states: Array1<States> = Array1::default(ntime);
-    for s in states.iter_mut() {
-        s.init(nbody);
-    }
     Propag {
         frame,
         names: Array1::default(nbody),
         masses: Array1::default(nbody),
         radii: Array1::default(nbody),
-        states,
+        states: states::new(nbody),
         time,
         build_index: 0,
         nfrozen: 0,
@@ -60,7 +54,7 @@ impl Propag {
         self.names[self.build_index] = name;
         self.masses[self.build_index] = mass;
         self.radii[self.build_index] = radius;
-        self.states[0].set(self.build_index, x, y, z, vx, vy, vz);
+        self.states.set(self.build_index, x, y, z, vx, vy, vz);
         self.build_index += 1;
     }
     pub fn propagate_nexts(&mut self) {
@@ -72,16 +66,15 @@ impl Propag {
     pub fn time_step(&self) -> f64 {
         self.time[1] - self.time[0]
     }
-    pub fn _display_label(&self) {
+    pub fn display_label(&self) {
         println!(
             "{:>11}{:>20}{:>20}{:>20}{:>20}{:>20}{:>20}",
             "t", "x", "y", "z", "vx", "vy", "vz"
         );
     }
-    pub fn _display(&self, ibody: usize, itime: usize) {
+    pub fn display(&self, itime: usize, ibody: usize) {
         print!("{:11.1}", self.time[itime]);
-        stdout().flush().unwrap();
-        self.states[itime].display_body(ibody);
+        self.states.display_body(ibody);
     }
 }
 

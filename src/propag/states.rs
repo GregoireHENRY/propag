@@ -30,8 +30,8 @@ impl States {
         self.vy[ibody] = vy;
         self.vz[ibody] = vz;
     }
-    pub fn display_body(&self, ibody: usize) {
-        println!(
+    pub fn format_body(&self, ibody: usize) -> String {
+        format!(
             "{:20.10}{:20.10}{:20.10}{:20.10}{:20.10}{:20.10}",
             self.x[ibody],
             self.y[ibody],
@@ -39,7 +39,10 @@ impl States {
             self.vx[ibody],
             self.vy[ibody],
             self.vz[ibody]
-        );
+        )
+    }
+    pub fn display_body(&self, ibody: usize) {
+        println!("{}", self.format_body(ibody));
     }
 }
 impl std::ops::Mul<f64> for States {

@@ -2,10 +2,12 @@ use crate::propag;
 use itertools::izip;
 use propag::{Propag, States};
 
-//use crossbeam::thread;
-use std::sync::mpsc;
-use std::sync::mpsc::{Receiver, Sender};
-use std::thread;
+use crossbeam::{channel, thread, Receiver, Sender};
+use std::fs::File;
+use std::io::Write;
+//use std::sync::mpsc;
+//use std::sync::mpsc::{Receiver, Sender};
+//use std::thread;
 
 fn rkfn(propag: &Propag, mut s: States) -> States {
     let mut new_s = s.clone();
@@ -48,25 +50,50 @@ fn rkfn(propag: &Propag, mut s: States) -> States {
 }
 
 pub fn rk(propag: &mut Propag) {
-    let (to, from): (Sender<States>, Receiver<States>) = mpsc::channel();
+    //    let (to, from): (Sender<States>, Receiver<States>) = mpsc::channel();
+    let (tx, rx): (Sender<States>, Receiver<States>) = channel::unbounded();
 
-    let handle = thread::spawn(move || {
-        // THREAD RECEIVER
+    let time = propag.time.clone();
+    let (do_save, file) = match propag.save {
+        Some(_) => (
+            true,
+            Some(
+                File::create(format!(
+                    "rsc/out/{}.txt",
+                    propag.names[propag.save.unwrap()]
+                ))
+                .unwrap(),
+            ),
+        ),
+        None => (false, None),
+    };
+    let mut file = file.unwrap();
+    thread::scope(|s| {
+        s.spawn(|_| {
+            // THREAD RECEIVER
+            for _ in time.iter() {
+                let data = rx.recv().unwrap();
+                if data.x[1] > 165800. {
+                    if do_save {
+                        file.write(data.format_body(1).as_bytes()).unwrap();
+                        file.write(b"\n").unwrap();
+                    }
+                }
+                //data to be written in file
+            }
+        });
+
+        // THREAD SENDER
         for _ in propag.time.iter() {
-            let data = from.recv().unwrap();
-            //data to be written in file
+            let k1 = propag.time_step() * rkfn(&propag, propag.states.clone());
+            let k2 = propag.time_step() * rkfn(&propag, propag.states.clone() + k1.clone() / 2.);
+            let k3 = propag.time_step() * rkfn(&propag, propag.states.clone() + k2.clone() / 2.);
+            let k4 = propag.time_step() * rkfn(&propag, propag.states.clone() + k3.clone());
+            propag.states += (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
+            tx.send(propag.states.clone()).unwrap();
         }
-    });
+    })
+    .unwrap();
 
-    // THREAD SENDER
-    for _ in propag.time.iter() {
-        let k1 = propag.time_step() * rkfn(&propag, propag.states.clone());
-        let k2 = propag.time_step() * rkfn(&propag, propag.states.clone() + k1.clone() / 2.);
-        let k3 = propag.time_step() * rkfn(&propag, propag.states.clone() + k2.clone() / 2.);
-        let k4 = propag.time_step() * rkfn(&propag, propag.states.clone() + k3.clone());
-        propag.states += (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
-        to.send(propag.states.clone());
-    }
-
-    handle.join().unwrap();
+    //handle.join().unwrap();
 }

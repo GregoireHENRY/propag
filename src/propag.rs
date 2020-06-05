@@ -8,7 +8,6 @@ mod states;
 
 use ndarray::prelude::*;
 use states::States;
-use std::fs::File;
 
 pub const _AU: f64 = 149597870700.;
 pub const G: f64 = 6.67408e-11;
@@ -22,10 +21,10 @@ pub struct Propag {
     pub masses: Array1<f64>,
     pub radii: Array1<f64>,
     pub states: States,
-    pub saves: Array1<bool>,
     pub time: Array1<f64>,
     pub build_index: usize,
     pub nfrozen: usize,
+    pub save: Option<usize>,
 }
 
 pub fn new(frame: &str, nbody: usize, time: Array1<f64>) -> Propag {
@@ -35,10 +34,10 @@ pub fn new(frame: &str, nbody: usize, time: Array1<f64>) -> Propag {
         masses: Array1::default(nbody),
         radii: Array1::default(nbody),
         states: states::new(nbody),
-        saves: Array1::default(nbody),
         time,
         build_index: 0,
         nfrozen: 0,
+        save: None,
     }
 }
 
@@ -81,9 +80,7 @@ impl Propag {
         self.states.display_body(ibody);
     }
     pub fn save(&mut self, name: &str) {
-        let iname = self.names.iter().position(|x| x == name).unwrap();
-        self.saves[iname] = true;
-        File::create(format!("rsc/out/{}.txt", name)).unwrap();
+        self.save = Some(self.names.iter().position(|x| x == name).unwrap());
     }
 }
 

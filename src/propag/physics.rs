@@ -77,7 +77,7 @@ pub fn rk(propag: &mut Propag) {
             // THREAD RECEIVER
             for time in time.iter() {
                 let data = rx.recv().unwrap();
-                if data.x[1] > 165800. {
+                if time.abs() % propag::DAY == 0. {
                     if do_save {
                         file.write(format!("{:>11}", time).as_bytes()).unwrap();
                         file.write(data.format_body(1).as_bytes()).unwrap();

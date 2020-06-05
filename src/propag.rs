@@ -69,11 +69,14 @@ impl Propag {
     pub fn time_step(&self) -> f64 {
         self.time[1] - self.time[0]
     }
-    pub fn display_label(&self) {
-        println!(
+    pub fn format_label(&self) -> String {
+        format!(
             "{:>11}{:>20}{:>20}{:>20}{:>20}{:>20}{:>20}",
             "t", "x", "y", "z", "vx", "vy", "vz"
-        );
+        )
+    }
+    pub fn display_label(&self) {
+        println!("{}", self.format_label());
     }
     pub fn display(&self, itime: usize, ibody: usize) {
         print!("{:11.1}", self.time[itime]);

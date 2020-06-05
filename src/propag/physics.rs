@@ -68,13 +68,18 @@ pub fn rk(propag: &mut Propag) {
         None => (false, None),
     };
     let mut file = file.unwrap();
+    if do_save {
+        file.write(propag.format_label().as_bytes()).unwrap();
+        file.write(b"\n").unwrap();
+    }
     thread::scope(|s| {
         s.spawn(|_| {
             // THREAD RECEIVER
-            for _ in time.iter() {
+            for time in time.iter() {
                 let data = rx.recv().unwrap();
                 if data.x[1] > 165800. {
                     if do_save {
+                        file.write(format!("{:>11}", time).as_bytes()).unwrap();
                         file.write(data.format_body(1).as_bytes()).unwrap();
                         file.write(b"\n").unwrap();
                     }

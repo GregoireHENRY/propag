@@ -50,7 +50,6 @@ fn rkfn(propag: &Propag, mut s: States) -> States {
 }
 
 pub fn rk(propag: &mut Propag) {
-    //    let (to, from): (Sender<States>, Receiver<States>) = mpsc::channel();
     let (tx, rx): (Sender<States>, Receiver<States>) = channel::unbounded();
 
     let time = propag.time.clone();
@@ -72,6 +71,7 @@ pub fn rk(propag: &mut Propag) {
         file.write(propag.format_label().as_bytes()).unwrap();
         file.write(b"\n").unwrap();
     }
+
     thread::scope(|s| {
         s.spawn(|_| {
             // THREAD RECEIVER
@@ -84,7 +84,6 @@ pub fn rk(propag: &mut Propag) {
                         file.write(b"\n").unwrap();
                     }
                 }
-                //data to be written in file
             }
         });
 
@@ -99,6 +98,4 @@ pub fn rk(propag: &mut Propag) {
         }
     })
     .unwrap();
-
-    //handle.join().unwrap();
 }

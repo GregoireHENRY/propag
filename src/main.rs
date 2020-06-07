@@ -1,15 +1,15 @@
 mod propag;
 
-use std::time::Instant;
-
 fn main() {
     let frame = "ICRS";
+    let origin = "133P";
     let nbody = 2;
+    // t0, tf, dt
     let time = propag::set_time(0., -propag::DAY * 15., -10.);
 
-    let mut propag = propag::new(frame, nbody, time);
+    let mut propag = propag::new(frame, origin, nbody, time);
 
-    // Create every frozen before, then add bodies to be propagated
+    // Frozens first
     // name, mass, radius, x, y, z, vx, vy, vz
     propag.add("133P", 1e13, 2e3, 0., 0., 0., 0., 0., 0.);
     propag.propagate_nexts();
@@ -17,11 +17,5 @@ fn main() {
 
     propag.save("spacecraft");
 
-    propag.display_label();
-    propag.display(0, 1);
-    let tic = Instant::now();
-    println!("Retro propagation started..");
     propag.start();
-    println!("\telapsed time {:.2} seconds.", tic.elapsed().as_secs_f64());
-    propag.display(propag.time.len() - 1, 1);
 }

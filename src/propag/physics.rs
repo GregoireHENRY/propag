@@ -3,11 +3,9 @@ use itertools::izip;
 use propag::{Propag, States};
 
 use crossbeam::{channel, thread, Receiver, Sender};
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
-//use std::sync::mpsc;
-//use std::sync::mpsc::{Receiver, Sender};
-//use std::thread;
 
 fn rkfn(propag: &Propag, mut s: States) -> States {
     let mut new_s = s.clone();
@@ -20,6 +18,9 @@ fn rkfn(propag: &Propag, mut s: States) -> States {
         new_s.vy.iter_mut(),
         new_s.vz.iter_mut()
     ) {
+        if propag.names.iter().position(|x| x == name).unwrap() < propag.nfrozen {
+            continue;
+        }
         let old = (*vx, *vy, *vz);
         *vx = 0.;
         *vy = 0.;
@@ -53,39 +54,48 @@ pub fn rk(propag: &mut Propag) {
     let (tx, rx): (Sender<States>, Receiver<States>) = channel::unbounded();
 
     let time = propag.time.clone();
-    let (do_save, file) = match propag.save {
-        Some(_) => (
-            true,
-            Some(
-                File::create(format!(
-                    "rsc/out/{}.txt",
-                    propag.names[propag.save.unwrap()]
-                ))
-                .unwrap(),
-            ),
-        ),
-        None => (false, None),
-    };
-    let mut file = file.unwrap();
-    if do_save {
-        file.write(propag.format_label().as_bytes()).unwrap();
-        file.write(b"\n").unwrap();
+
+    let mut files = HashMap::new();
+    let saves = propag.saves.clone();
+    for ibody in saves.iter() {
+        let name = propag.names[*ibody];
+        files.insert(
+            ibody,
+            File::create(format!("rsc/out/{}.txt", name)).unwrap(),
+        );
+        files
+            .get_mut(ibody)
+            .unwrap()
+            .write(
+                format!(
+                    "Frame: {}\nOrigin: {}\nBody: {}\n{}\n",
+                    propag.frame,
+                    propag.origin,
+                    name,
+                    propag.format_label(),
+                )
+                .as_bytes(),
+            )
+            .unwrap();
     }
 
     thread::scope(|s| {
-        s.spawn(|_| {
-            // THREAD RECEIVER
-            for time in time.iter() {
-                let data = rx.recv().unwrap();
-                if time.abs() % propag::DAY == 0. {
-                    if do_save {
-                        file.write(format!("{:>11}", time).as_bytes()).unwrap();
-                        file.write(data.format_body(1).as_bytes()).unwrap();
-                        file.write(b"\n").unwrap();
+        if !files.is_empty() {
+            s.spawn(move |_| {
+                // THREAD RECEIVER
+                for time in time.iter() {
+                    let data = rx.recv().unwrap();
+                    if time.abs() % propag::DAY == 0. {
+                        for (ibody, file) in &mut files {
+                            file.write(
+                                format!("{:>11}{}\n", time, data.format_body(**ibody)).as_bytes(),
+                            )
+                            .unwrap();
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
         // THREAD SENDER
         for _ in propag.time.iter() {
